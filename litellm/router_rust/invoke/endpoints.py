@@ -636,6 +636,44 @@ _SYNC_VECTOR_STORE_FILES: Final[Mapping[str, str]] = MappingProxyType(
     }
 )
 
+# The endpoints ``RustEndpoints`` serves with a method of its own, by the same name.
+_DIRECT_ENDPOINTS: Final = frozenset(
+    {
+        "avector_store_create",
+        "acreate_file",
+        "acreate_batch",
+        "acancel_batch",
+        "aretrieve_batch",
+        "alist_batches",
+        "aadapter_completion",
+        "abatch_completion",
+        "abatch_completion_one_model_multiple_requests",
+        "abatch_completion_fastest_response",
+        "schedule_acompletion",
+        "priority_header_update",
+        "aguardrail",
+        "asearch",
+    }
+)
+
+
+def endpoint_names() -> frozenset[str]:
+    """Every endpoint name ``RustEndpoints.member`` may serve: what ``dir()`` of a router lists."""
+    return frozenset(
+        {
+            *PLANS,
+            *_HOST_GENERIC,
+            *_VIDEO_DIRECT,
+            *_SYNC_GENERIC,
+            *_UNBRANCHED,
+            *_ASSISTANTS,
+            *_MANAGED_AGENTS,
+            *_SYNC_VECTOR_STORE_FILES,
+            *_DIRECT_ENDPOINTS,
+            "create_interaction",
+        }
+    )
+
 
 def plan_for(endpoint: str) -> Plan:
     plan: Final = generic_plan(endpoint)
@@ -968,8 +1006,7 @@ def _search_attempt(
     kwargs: dict[str, object],  # mutable-ok: the attempt's own kwargs
     group: str,
 ) -> AttemptCall:
-    """`SearchAPIRouter.async_search_with_fallbacks_helper`: one of the search tools named
-    ``group`` at random, called with its provider, credentials and params under the request's."""
+    """One of the search tools named ``group`` at random, called with its provider, credentials and params under the request's."""
     import random
 
     tools: Final = [tool for tool in core.endpoints.search_tools if as_dict(tool).get("search_tool_name") == group]
@@ -1490,23 +1527,8 @@ class RustEndpoints:
             return self._sync_vector_store_files(name)
         if name == "create_interaction":
             return self._factory("create_interaction", "interactions.create")
-        direct: Final = {
-            "avector_store_create": self.avector_store_create,
-            "acreate_file": self.acreate_file,
-            "acreate_batch": self.acreate_batch,
-            "acancel_batch": self.acancel_batch,
-            "aretrieve_batch": self.aretrieve_batch,
-            "alist_batches": self.alist_batches,
-            "aadapter_completion": self.aadapter_completion,
-            "abatch_completion": self.abatch_completion,
-            "abatch_completion_one_model_multiple_requests": self.abatch_completion_one_model_multiple_requests,
-            "abatch_completion_fastest_response": self.abatch_completion_fastest_response,
-            "schedule_acompletion": self.schedule_acompletion,
-            "priority_header_update": self.priority_header_update,
-            "aguardrail": self.aguardrail,
-            "asearch": self.asearch,
-        }.get(name)
-        if direct is not None:
+        if name in _DIRECT_ENDPOINTS:
+            direct: Final[Callable[..., object]] = getattr(self, name)  # pyright: ignore[reportAny]  # one of this class's own endpoint methods
             return direct
         if name == "responses":
             return self._sync_factory(name, PLANS["responses"])
@@ -2440,6 +2462,7 @@ __all__ = [
     "attempt_call",
     "clean_realtime_session_deployment",
     "compacted_attempt",
+    "endpoint_names",
     "failover_fields",
     "generic_plan",
     "log_refused_call",

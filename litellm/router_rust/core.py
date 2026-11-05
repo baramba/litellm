@@ -11,11 +11,9 @@ itself only through its host, and the host never calls back into a Python router
   Python router would have running for the request reach (``OptionalChecks.outcome_callbacks``)
 - sleeps, fallback access and budget checks, and cache reads and writes are host steps
 
-``RustCore`` does not build, wrap or read a ``PythonCore``. Settings are resolved from the
-``RouterConfig`` and the host's process settings; the views (``registry()``, ``settings()``,
-``health()``) are read from the Rust handle. A member the Rust core does not serve raises
-``RustCoreUnsupported`` (an ``AttributeError``) instead of reaching a Python core, so deleting
-``router_python_core.py`` cannot change what this core does.
+Settings are resolved from the ``RouterConfig`` and the host's process settings; the views
+(``registry()``, ``settings()``, ``health()``) are read from the Rust handle. A member the Rust
+core does not serve raises ``RustCoreUnsupported`` (an ``AttributeError``).
 """
 
 import contextlib
@@ -79,6 +77,7 @@ from litellm.router_rust.invoke.endpoints import (
     attempt_call,
     clean_realtime_session_deployment,
     compacted_attempt,
+    endpoint_names,
     failover_fields,
     generic_plan,
     log_refused_call,
@@ -1343,6 +1342,7 @@ class RustCore(
         )
         self._hosted._core_cache = self._cache  # pyright: ignore[reportPrivateUsage]  # usage reads come from the cache the Rust core writes
         ctx: Final = RoutingContext(self)  # pyright: ignore[reportArgumentType]  # the strategies read registry(), settings(), health() and select()
+        self._ctx: Final = ctx
         strategies: Final = PreRoutingStrategies(
             self._hosted, host, ctx, config.get("auto_router_capability_limit"), self._cache
         )
@@ -1385,6 +1385,11 @@ class RustCore(
             apply_lar1_routing_strategy(ctx, resolved.routing_strategy_args)  # pyright: ignore[reportArgumentType]  # the core's RoutingContext
 
     @property
+    def _core_ctx(self) -> RoutingContext:
+        """The router's ``RoutingContext``: what a routing helper gets where it once took the router."""
+        return self._ctx
+
+    @property
     def _registry_state(self) -> HostRegistry:
         return self._hosted
 
@@ -1416,6 +1421,9 @@ class RustCore(
         self._settings = None
         if enabled:
             register_continuation_prefill_check(self._host)
+
+    def __dir__(self) -> list[str]:  # mutable-ok: dir() returns a list
+        return sorted({*super().__dir__(), *endpoint_names()})
 
     def __getattr__(self, name: str) -> object:
         if name in self.__dict__.get("_deleted", ()):
@@ -2392,7 +2400,7 @@ class RustCore(
         return await self._endpoints.generic(plan_for("aanthropic_messages"), kwargs)
 
     async def anthropic_messages(self, **kwargs: object) -> object:  # kwargs-ok: endpoint payload
-        """The proxy's ``/v1/messages`` route name for ``aanthropic_messages``; async, as in PythonCore."""
+        """The proxy's ``/v1/messages`` route name for ``aanthropic_messages``; async."""
         return await self._endpoints.generic(plan_for("anthropic_messages"), kwargs)
 
     async def aimage_generation(self, *args: object, **kwargs: object) -> object:  # kwargs-ok: endpoint payload

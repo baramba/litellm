@@ -1362,7 +1362,7 @@ class TestTriggerCooldownForFailedDeployment:
 
 
 async def _stalled_stream_error() -> Exception:
-    from litellm.router import _aread_first_chunk
+    from litellm.router_rust.invoke.streaming import _aread_first_chunk  # noqa: PLC2701
 
     async def _stall(**kwargs: object) -> NoReturn:
         raise httpx.ReadTimeout("Timeout on reading data from socket")
