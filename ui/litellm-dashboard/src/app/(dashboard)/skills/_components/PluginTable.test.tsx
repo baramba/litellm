@@ -51,7 +51,7 @@ describe("PluginTable", () => {
 
   it("should display the empty state when data is empty", () => {
     render(<PluginTable {...defaultProps} pluginsList={[]} />);
-    expect(screen.getByText("No skills found")).toBeInTheDocument();
+    expect(screen.getByText("No skills registered yet")).toBeInTheDocument();
   });
 
   it("should sort by created date descending by default", () => {

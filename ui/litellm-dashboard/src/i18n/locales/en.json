@@ -1598,9 +1598,9 @@
   },
   "skills": {
     "panel": {
-      "title": "Skills",
-      "intro": "Register Claude Code skills. Published skills appear in the Skill Hub for all users and are served via <endpoint/>.",
-      "addButton": "+ Add Skill",
+      "title": "Skills Hub",
+      "intro": "Register and share reusable skills for Codex, Claude Code, and other agents that support the open Agent Skills format.",
+      "addButton": "+ Register your skill",
       "deleteDialog": {
         "title": "Delete Skill",
         "confirm": "Are you sure you want to delete skill: <name/>?",
@@ -1615,8 +1615,8 @@
     },
     "table": {
       "empty": {
-        "title": "No skills found",
-        "description": "Add one to get started."
+        "title": "No skills registered yet",
+        "description": "Register your first skill to get started."
       },
       "loading": "Loading skills…",
       "uncategorized": "Uncategorized",
@@ -1641,7 +1641,7 @@
       }
     },
     "addForm": {
-      "title": "Add New Skill",
+      "title": "Register your skill",
       "sourceOptions": {
         "url": "Source URL",
         "upload": "Upload ZIP"
@@ -1665,11 +1665,11 @@
       },
       "hints": {
         "archive": "Choose a ZIP from your computer, up to 10 MiB. Include SKILL.md at the root or inside one skill folder, along with any supporting files. The skill will use the same visibility settings as skills added by URL.",
-        "sourceUrl": "Paste an HTTPS git repository URL from GitHub, GitLab, Bitbucket, or a self-hosted host (e.g. github.com/org/repo or github.com/org/repo/tree/main/my-skill), or an HTTPS link to a .zip archive of the skill hosted on S3 or any static file server. For a private repository use its SSH clone URL (git@ghe.example.com:org/repo.git) so Claude Code clones it with your own SSH key.",
-        "subPath": "Path within the repository where the skill lives (e.g., plugins/my-skill). Leave empty if the skill is at the repo root.",
-        "sha256": "Hex digest of the zip file. Claude Code refuses to install the archive if its checksum does not match.",
+        "sourceUrl": "Link to a Git repository, a skill folder, or a ZIP archive containing SKILL.md and any supporting files. For private repositories, use an SSH clone URL with access configured in your agent.",
+        "subPath": "Path within the repository where the skill lives (e.g., skills/my-skill). Leave empty if the skill is at the repo root.",
+        "sha256": "Optional SHA-256 digest for verifying the ZIP archive’s integrity.",
         "name": "Unique identifier in kebab-case format (e.g., my-skill)",
-        "domain": "Top-level grouping in the Skill Hub (e.g., Productivity)",
+        "domain": "Top-level grouping in the Skills Hub (e.g., Productivity)",
         "namespace": "Sub-grouping within domain (e.g., workflows)",
         "description": "Brief description of what the skill does",
         "category": "Select a category or enter a custom one",
@@ -1694,13 +1694,13 @@
       "detected": "Detected: {{source}}",
       "noCategories": "No matching categories",
       "cancel": "Cancel",
-      "adding": "Adding...",
-      "submit": "Add Skill",
+      "adding": "Registering...",
+      "submit": "Register skill",
       "errors": {
         "zipRequired": "Please choose a .zip file",
         "zipTooLarge": "The ZIP file must be 10 MiB or smaller",
         "urlRequired": "Please enter a repository or zip archive URL",
-        "subPathInvalid": "Subfolder must be a relative path like plugins/my-skill (letters, numbers, dots, hyphens, underscores)",
+        "subPathInvalid": "Subfolder must be a relative path like skills/my-skill (letters, numbers, dots, hyphens, underscores)",
         "sha256Invalid": "SHA-256 must be a 64-character hex digest",
         "nameRequired": "Please enter skill name",
         "nameInvalid": "Name must be kebab-case (lowercase, numbers, hyphens only)",
@@ -1743,7 +1743,7 @@
         "newer": "Newer",
         "older": "Older"
       },
-      "back": "Skills",
+      "back": "Skills Hub",
       "tabs": {
         "overview": "Overview",
         "usage": "How to Use"
@@ -1774,14 +1774,14 @@
       "copy": "Copy",
       "copied": "Copied",
       "usage": {
-        "title": "Using this skill",
+        "title": "Use with Claude Code",
         "intro": "Once your proxy is set as a marketplace, enable this skill in Claude Code with one command:",
         "staleCatalog": "If you see \"Plugin {{name}} not found in marketplace\", update the catalog first:",
         "notConfigured": "Don't have the marketplace configured yet?",
         "seeSetup": "See one-time setup →"
       },
       "setup": {
-        "title": "One-time marketplace setup",
+        "title": "Claude Code marketplace setup",
         "removeFirst": "If you added this marketplace before without a key, remove it first in Claude Code. Removing it also uninstalls the plugins you installed from it, so install them again from /plugin after you add the snippet:",
         "requiresKey": "This proxy requires a LiteLLM key to read the marketplace. Add this to <settings/> and replace <placeholder/> with your key:",
         "runCommand": "Run this command in Claude Code to register the marketplace:",
@@ -1789,7 +1789,7 @@
       }
     },
     "makePublic": {
-      "title": "Publish to Skill Hub",
+      "title": "Publish to Skills Hub",
       "steps": {
         "select": "Select Skills",
         "confirm": "Confirm"
@@ -1797,15 +1797,15 @@
       "step1": {
         "title": "Select Skills to Publish",
         "selectAll": "Select All ({{total}})",
-        "description": "Selected skills will be visible to all users in the Skill Hub. Deselected skills will be unpublished.",
+        "description": "Selected skills will be visible to all users in the Skills Hub. Deselected skills will be unpublished.",
         "empty": "No skills registered yet.",
         "public": "Public",
         "selectedCount_one": "<strong>{{count}}</strong> skill will be published",
         "selectedCount_other": "<strong>{{count}}</strong> skills will be published"
       },
       "step2": {
-        "title": "Confirm Publish to Skill Hub",
-        "note": "<strong>Note:</strong> Published skills will be visible to all users in the Skill Hub tab. Skills not in the list below will be unpublished.",
+        "title": "Confirm Publish to Skills Hub",
+        "note": "<strong>Note:</strong> Published skills will be visible to all users in the Skills Hub tab. Skills not in the list below will be unpublished.",
         "listTitle": "Skills to be published:",
         "total_one": "Total: <strong>{{count}}</strong> skill will be published",
         "total_other": "Total: <strong>{{count}}</strong> skills will be published"
@@ -1818,8 +1818,8 @@
       },
       "toasts": {
         "selectAtLeastOne": "Please select at least one skill",
-        "published_one": "Skill Hub updated — {{count}} skill(s) published",
-        "published_other": "Skill Hub updated — {{count}} skill(s) published",
+        "published_one": "Skills Hub updated — {{count}} skill(s) published",
+        "published_other": "Skills Hub updated — {{count}} skill(s) published",
         "publishFailed": "Failed to update skills. Please try again."
       }
     }
@@ -6453,7 +6453,7 @@
         "models": "Model Hub",
         "agents": "Agent Hub",
         "mcp": "MCP Hub",
-        "skills": "Skill Hub"
+        "skills": "Skills Hub"
       },
       "models": {
         "title": "Available Models",
@@ -6616,7 +6616,7 @@
         "models": "Model Hub",
         "agents": "Agent Hub",
         "mcp": "MCP Hub",
-        "skills": "Skill Hub"
+        "skills": "Skills Hub"
       },
       "models": {
         "chatTitle": "Models",
@@ -7039,7 +7039,7 @@
       "agents": "Agents",
       "mcpShort": "MCP",
       "mcpServers": "MCP servers",
-      "skills": "Skills"
+      "skills": "Skills Hub"
     },
     "header": {
       "title": "AI Hub",

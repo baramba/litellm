@@ -381,7 +381,7 @@ const AddPluginForm: React.FC<AddPluginFormProps> = ({ visible, onClose, accessT
                       <Input
                         {...field}
                         ref={ref}
-                        placeholder="plugins/my-skill"
+                        placeholder="skills/my-skill"
                         className="rounded-lg"
                         onChange={(event) => {
                           onChange(event);

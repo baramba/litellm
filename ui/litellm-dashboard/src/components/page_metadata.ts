@@ -41,7 +41,7 @@ export const pageDescriptions: Record<string, string> = {
   "ui-theme": "Customize dashboard appearance",
   "tag-management": "Organize resources with tags",
   prompts: "Manage and version prompt templates",
-  skills: "Browse and manage Claude Code skills",
+  skills: "Register and share reusable agent skills in the Skills Hub",
   "router-settings": "Configure routing and load balancing settings",
   telemetry: "Choose which anonymous usage telemetry this proxy collects and see the last report",
   "logging-and-alerts": "Set up logging and alert configurations",

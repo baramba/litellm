@@ -93,14 +93,7 @@ const ClaudeCodePluginsPanel: React.FC<ClaudeCodePluginsPanelProps> = ({ accessT
         <>
           <div className="flex flex-col gap-2 mb-4">
             <h1 className="text-2xl font-bold">{t("skills.panel.title")}</h1>
-            <p className="text-sm text-muted-foreground">
-              <Trans
-                i18nKey="skills.panel.intro"
-                components={{
-                  endpoint: <code className="bg-muted px-1 rounded-sm">/claude-code/marketplace.json</code>,
-                }}
-              />
-            </p>
+            <p className="text-sm text-muted-foreground">{t("skills.panel.intro")}</p>
             <div className="mt-2 flex gap-2">
               <Button onClick={() => setIsAddModalVisible(true)} disabled={!accessToken || !isAdmin}>
                 {t("skills.panel.addButton")}

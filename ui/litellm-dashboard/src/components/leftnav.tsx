@@ -245,7 +245,7 @@ const menuGroups: MenuGroup[] = [
         ],
       },
       { key: "mcp-servers", page: "mcp-servers", label: "MCP Servers", icon: <Server {...ICON} /> },
-      { key: "skills", page: "skills", label: "Skills", icon: <Blocks {...ICON} />, roles: all_admin_roles },
+      { key: "skills", page: "skills", label: "Skills Hub", icon: <Blocks {...ICON} />, roles: all_admin_roles },
       { key: "guardrails", page: "guardrails", label: "Guardrails", icon: <Shield {...ICON} /> },
       {
         key: "policies",

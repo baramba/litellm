@@ -23,7 +23,7 @@ const DEFAULT_PROPS = {
 };
 
 const URL_PLACEHOLDER = "https://github.com/org/repo or https://bucket.s3.amazonaws.com/my-skill.zip";
-const SUBPATH_PLACEHOLDER = "plugins/my-skill";
+const SUBPATH_PLACEHOLDER = "skills/my-skill";
 const SHA256_PLACEHOLDER = "64 hex characters";
 const S3_ZIP_URL = "https://skills-bucket.s3.us-east-1.amazonaws.com/plugins/s3-skill-1.0.0.zip";
 const DIGEST = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855";
@@ -166,7 +166,7 @@ describe("AddPluginForm", () => {
 
   const submit = async () => {
     await act(async () => {
-      fireEvent.click(screen.getByRole("button", { name: "Add Skill" }));
+      fireEvent.click(screen.getByRole("button", { name: "Register skill" }));
     });
   };
 
@@ -383,7 +383,7 @@ describe("AddPluginForm", () => {
     fireEvent.change(screen.getByPlaceholderText("my-skill"), { target: { value: "personal-skill" } });
     fireEvent.change(screen.getByPlaceholderText("A skill that helps with..."), { target: { value: "My workflow" } });
     await submit();
-    expect(screen.getByRole("button", { name: "Adding..." })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Registering..." })).toBeDisabled();
     expect(DEFAULT_PROPS.onClose).not.toHaveBeenCalled();
     await act(async () => pending.reject(new Error("Unable to save skill")));
     expect(mockMessageError).toHaveBeenCalledWith("Unable to save skill");
