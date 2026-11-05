@@ -12,6 +12,10 @@ from pydantic import TypeAdapter, ValidationError
 
 from litellm.models.plugin_upload import (
     PluginArchiveMetadata,
+    PluginDownloader,
+    PluginDownloadEvent,
+    PluginDownloadResult,
+    PluginDownloadsResponse,
     PluginPublication,
     PluginPublicationBase,
     PluginPublicationError,
@@ -28,11 +32,19 @@ from litellm.repositories.table_repositories import ClaudeCodePluginRepository
 if TYPE_CHECKING:
     from prisma import models as prisma_models
 
+    from litellm.proxy.db.create_views import SupportsExecuteRaw
     from litellm.proxy.utils import PrismaClient
 
 _MANIFEST: Final = TypeAdapter(dict[str, object])
 _SOURCE: Final = TypeAdapter(dict[str, str])
 PAGE_SIZE: Final = 100
+_INCREMENT_ANONYMOUS_DOWNLOADS: Final = """
+UPDATE "LiteLLM_ClaudeCodePluginTable"
+SET "anonymous_download_count" = "anonymous_download_count" + 1
+WHERE "id" = $1
+"""
+
+
 _VERSIONS: Final = TypeAdapter(tuple[PluginVersion, ...])
 _VERSION_QUERY: Final = """
     SELECT v.id, v.version, v.description, COALESCE(v.manifest_json, '{}')::jsonb AS manifest,
@@ -51,10 +63,17 @@ class PluginUploadRepository:
         self._db = cast(  # cast-ok: the generated Prisma transaction delegate is untyped at this boundary
             _PublicationDatabase, prisma_client.writer_db
         )
+        self._writer = cast(  # cast-ok: PrismaWrapper dynamically delegates raw statements to its generated client
+            "SupportsExecuteRaw", prisma_client.writer_db
+        )
         self._plugins = ClaudeCodePluginRepository(prisma_client, use_writer=True).table
         self._archives = cast(  # cast-ok: Prisma exposes generated table actions through an untyped delegate
             TableActions["prisma_models.LiteLLM_ClaudeCodePluginUpload"],
             prisma_client.writer_db.litellm_claudecodepluginupload,
+        )
+        self._downloads = cast(  # cast-ok: Prisma exposes generated table actions through an untyped delegate
+            TableActions["prisma_models.LiteLLM_ClaudeCodePluginDownload"],
+            prisma_client.writer_db.litellm_claudecodeplugindownload,
         )
 
     async def create(self, upload: PluginUpload) -> str | None:
@@ -165,6 +184,7 @@ class PluginUploadRepository:
                 "plugin_name": metadata.name,
                 "plugin": {
                     "is": {
+                        "id": metadata.id,
                         "manifest_json": metadata.manifest_json,
                         "enabled": metadata.enabled,
                     }
@@ -172,6 +192,66 @@ class PluginUploadRepository:
             }
         )
         return None if archive is None else archive.content.decode()
+
+    async def record_download(
+        self, metadata: PluginArchiveMetadata, digest: str, downloader: PluginDownloader
+    ) -> PluginDownloadResult:
+        from prisma.errors import ForeignKeyViolationError
+
+        if metadata.id is None:
+            return PluginDownloadResult.SKILL_NOT_FOUND
+        if not downloader.authenticated:
+            # A counter bounds anonymous storage; raw SQL preserves Prisma's @updatedAt metadata.
+            affected: Final = await self._writer.execute_raw(_INCREMENT_ANONYMOUS_DOWNLOADS, metadata.id)
+            return PluginDownloadResult.RECORDED if affected == 1 else PluginDownloadResult.SKILL_NOT_FOUND
+        try:
+            await self._downloads.create(
+                data={
+                    "plugin_id": metadata.id,
+                    "version": metadata.version,
+                    "digest": digest,
+                    "authenticated": downloader.authenticated,
+                    "user_id": downloader.user_id,
+                    "user_email": downloader.user_email,
+                    "key_alias": downloader.key_alias,
+                    "team_id": downloader.team_id,
+                    "team_alias": downloader.team_alias,
+                }
+            )
+        except ForeignKeyViolationError:
+            return PluginDownloadResult.SKILL_NOT_FOUND
+        return PluginDownloadResult.RECORDED
+
+    async def downloads(self, name: str, limit: int, cursor: int | None) -> PluginDownloadsResponse | None:
+        plugin: Final = await self._plugins.find_unique(where={"name": name})
+        if plugin is None:
+            return None
+        total: Final = await self._downloads.count(where={"plugin_id": plugin.id})
+        rows: Final = await self._downloads.find_many(
+            where={"plugin_id": plugin.id, **({"id": {"lt": cursor}} if cursor is not None else {})},
+            order={"id": "desc"},
+            take=limit + 1,
+        )
+        return PluginDownloadsResponse(
+            total_downloads=total + plugin.anonymous_download_count,
+            anonymous_downloads=plugin.anonymous_download_count,
+            downloads=tuple(
+                PluginDownloadEvent(
+                    id=str(row.id),
+                    downloaded_at=row.downloaded_at,
+                    version=row.version,
+                    digest=row.digest,
+                    authenticated=row.authenticated,
+                    user_id=row.user_id,
+                    user_email=row.user_email,
+                    key_alias=row.key_alias,
+                    team_id=row.team_id,
+                    team_alias=row.team_alias,
+                )
+                for row in rows[:limit]
+            ),
+            next_cursor=str(rows[limit - 1].id) if len(rows) > limit else None,
+        )
 
 
 def _archive_metadata(plugin: "prisma_models.LiteLLM_ClaudeCodePluginTable") -> PluginArchiveMetadata:
